@@ -26,6 +26,18 @@ data = [
     {
         'time': dt.datetime(2021, 1, 1, 0, 15),
         'value': 50_001
+    },
+    {
+        'time': dt.datetime(2021, 1, 1, 0, 15),
+        'value': 2
+    },
+    {
+        'time': dt.datetime(2021, 1, 1, 0, 15),
+        'value': 40_000
+    },
+    {
+        'time': dt.datetime(2021, 1, 1, 0, 15),
+        'value': 3
     }
 ]
 
@@ -54,3 +66,7 @@ def test_value_bigger_than_eight_millions_is_outlier_by_default():
 def test_maximum_for_value_can_be_set():
     detect(df, max_value=50_000)
     assert df.loc[3, 'outlier']
+
+
+def test_single_spikes_with_max_diff_are_outlier():
+    assert df.loc[5, 'outlier']
