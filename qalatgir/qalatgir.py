@@ -19,22 +19,22 @@ def get_consecutive_missing(values):
     return misses
 
 
-def average_interpolate(data, miss):
+def average_interpolate(data, miss_start, miss_end):
 
-    miss_count = miss[1] - miss[0]
-    start_value = data.iloc[miss[0] - 1]['value']
-    end_value = data.iloc[miss[1]]['value']
+    miss_count = miss_end - miss_start
+    start_value = data.iloc[miss_start - 1]['value']
+    end_value = data.iloc[miss_end]['value']
     change = (end_value - start_value) / (miss_count + 1)
 
-    for j, i in enumerate(range(*miss)):
-        data.iloc[i] = (j + 1) * change + data.iloc[miss[0] - 1]
+    for j, i in enumerate(range(miss_start, miss_end)):
+        data.iloc[i] = (j + 1) * change + data.iloc[miss_start - 1]
 
 
 def interpolate_missing(data, step, misses):
-    for miss in misses:
-        miss_count = miss[1] - miss[0]
+    for miss_start, miss_end in misses:
+        miss_count = miss_end - miss_start
         if miss_count < 2 or (miss_count < 4 and step < 60):
-            average_interpolate(data, miss)
+            average_interpolate(data, miss_start, miss_end)
 
 
 def add_slots_for_missing(data, step):
