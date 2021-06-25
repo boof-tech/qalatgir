@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from qalatgir import fill_missing
+from datasynthesis import unit_function_pattern
 
 
 data = [
@@ -22,6 +23,10 @@ data = [
 ]
 
 
+def mae(ar1, ar2):
+    return np.mean(np.abs(ar1-ar2))
+
+
 def test_one_missing_value_should_replace_with_average():
     corrected_data = fill_missing(data[:2], step=5)
     missed = {
@@ -30,3 +35,15 @@ def test_one_missing_value_should_replace_with_average():
     }
     data.append(missed)
     assert np.all(corrected_data == pd.DataFrame(data[:2] + [missed]).set_index('time').sort_index())
+
+
+def test_more_than_an_hour_missing_should_replace_with_other_days_average():
+    original_data = unit_function_pattern(dt.timedelta(minutes=5))
+    deleted = original_data.iloc[11 * 12:13 * 12]['value'].copy()
+    original_data.iloc[11 * 12:13 * 12]['value'] = np.nan
+    corrected_data = fill_missing(original_data, 5)
+
+    assert not any(corrected_data['value'].isna())
+
+    recovered = corrected_data.iloc[11 * 12:13 * 12]['value'].copy()
+    assert mae(deleted.to_numpy(), recovered.to_numpy()) < 100
