@@ -3,7 +3,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
-from qalatgir import fill_missing
+from qalatgir import fill_missing, numba_qalatgir
 from datasynthesis import unit_function_pattern
 
 
@@ -41,7 +41,7 @@ def test_more_than_an_hour_missing_should_replace_with_other_days_average():
     original_data = unit_function_pattern(dt.timedelta(minutes=5))
     missed_period = slice(11 * 12, 13 * 12)
     deleted = original_data.iloc[missed_period]['value'].copy()
-    original_data.iloc[missed_period]['value'] = np.nan
+    original_data.loc[missed_period, 'value'] = np.nan
     corrected_data = fill_missing(original_data, 5)
 
     assert not any(corrected_data['value'].isna())
@@ -54,10 +54,23 @@ def test_lots_of_missing_works_in_different_days():
     original_data = unit_function_pattern(dt.timedelta(minutes=15))
     missed_period = slice(20 * 4, 27 * 4)
     deleted = original_data.iloc[missed_period]['value'].copy()
-    original_data.iloc[missed_period]['value'] = np.nan
+    original_data.loc[missed_period, 'value'] = np.nan
     corrected_data = fill_missing(original_data, 15)
 
     assert not any(corrected_data['value'].isna())
 
     recovered = corrected_data.iloc[missed_period]['value'].copy()
     assert mae(deleted.to_numpy(), recovered.to_numpy()) < 100
+
+
+# def test_lots_of_missing_works_in_different_days_numba():
+#     original_data = unit_function_pattern(dt.timedelta(minutes=5))
+#     missed_period = slice(11 * 12, 13 * 12)
+#     deleted = original_data.iloc[missed_period]['value'].copy()
+#     original_data.loc[missed_period, 'value'] = np.nan
+#     corrected_data = numba_qalatgir.numba_fill_missing(original_data, 5)
+#
+#     assert not any(corrected_data['value'].isna())
+#
+#     recovered = corrected_data.iloc[missed_period]['value'].copy()
+#     assert mae(deleted.to_numpy(), recovered.to_numpy()) < 100
