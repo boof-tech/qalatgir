@@ -39,11 +39,25 @@ def test_one_missing_value_should_replace_with_average():
 
 def test_more_than_an_hour_missing_should_replace_with_other_days_average():
     original_data = unit_function_pattern(dt.timedelta(minutes=5))
-    deleted = original_data.iloc[11 * 12:13 * 12]['value'].copy()
-    original_data.iloc[11 * 12:13 * 12]['value'] = np.nan
+    missed_period = slice(11 * 12, 13 * 12)
+    deleted = original_data.iloc[missed_period]['value'].copy()
+    original_data.iloc[missed_period]['value'] = np.nan
     corrected_data = fill_missing(original_data, 5)
 
     assert not any(corrected_data['value'].isna())
 
-    recovered = corrected_data.iloc[11 * 12:13 * 12]['value'].copy()
+    recovered = corrected_data.iloc[missed_period]['value'].copy()
+    assert mae(deleted.to_numpy(), recovered.to_numpy()) < 100
+
+
+def test_lots_of_missing_works_in_different_days():
+    original_data = unit_function_pattern(dt.timedelta(minutes=15))
+    missed_period = slice(20 * 4, 27 * 4)
+    deleted = original_data.iloc[missed_period]['value'].copy()
+    original_data.iloc[missed_period]['value'] = np.nan
+    corrected_data = fill_missing(original_data, 15)
+
+    assert not any(corrected_data['value'].isna())
+
+    recovered = corrected_data.iloc[missed_period]['value'].copy()
     assert mae(deleted.to_numpy(), recovered.to_numpy()) < 100
