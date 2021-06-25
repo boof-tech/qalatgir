@@ -3,8 +3,10 @@ import datetime as dt
 
 import numpy as np
 import pandas as pd
+import numba
 
 
+@numba.jit(cache=True, nopython=True)
 def get_consecutive_missing(values):
     start = 0
     null_found = False
@@ -22,6 +24,7 @@ def get_consecutive_missing(values):
     return misses
 
 
+@numba.jit(cache=True, nopython=True)
 def invalid_value(v):
     return np.isnan(v) or not math.isfinite(v)
 
@@ -73,6 +76,6 @@ def fill_missing(data, step):
     if not len(data):
         return data
     data = add_slots_for_missing(data, step)
-    misses = get_consecutive_missing(data['value'])
+    misses = get_consecutive_missing(data['value'].to_numpy())
     interpolate_missing(data, step, misses)
     return data
