@@ -53,8 +53,21 @@ def neighbors_interpolate(data, miss_start, miss_end):
         data.iloc[i] = (j + 1) * change + data.iloc[miss_start - 1]
 
 
-def daily_average(data):
-    return data.groupby([data.index.hour, data.index.minute]).mean().reset_index(drop=True).to_numpy()
+def seconds(delta):
+    return delta.days * 24 * 3600 + delta.seconds
+
+
+def daily_average(arr, step_seconds, days, start_hour, start_minute):
+    points_per_day = (24 * 3600) // step_seconds
+    data_place = np.empty(points_per_day * (days + 1))
+    data_place.fill(np.nan)
+    offset = (start_hour * 3600) // step_seconds + (start_minute * 60) // step_seconds
+    data_place[offset:offset + len(arr)] = arr
+    data_stride = data_place.strides
+    daily_table = np.lib.stride_tricks.as_strided(data_place,
+                                                  shape=(days + 1, points_per_day),
+                                                  strides=(data_stride[0] * points_per_day, data_stride[0]))
+    return np.nanmean(daily_table, axis=0)
 
 
 def daily_average_interpolate(data, daily_vag, miss_start, miss_end, step):
@@ -72,7 +85,10 @@ def interpolate_missing(data, step, misses):
         if miss_count < 2 or step * miss_count <= dt.timedelta(hours=1):
             neighbors_interpolate(data, miss_start, miss_end)
         else:
-            daily_average_interpolate(data, daily_average(data), miss_start, miss_end, step)
+            daily_avg = daily_average(data['value'].to_numpy(),
+                                      step_seconds=step.seconds, days=(data.index[-1] - data.index[0]).days,
+                                      start_hour=data.index[0].hour, start_minute=data.index[0].minute)
+            daily_average_interpolate(data, daily_avg, miss_start, miss_end, step)
 
 
 def add_slots_for_missing(data, step):
