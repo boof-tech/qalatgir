@@ -29,8 +29,21 @@ def invalid_value(v):
     return np.isnan(v) or not math.isfinite(v)
 
 
-def neighbors_interpolate(data, miss_start, miss_end):
+def data_point_per_hour(step):
+    if isinstance(step, int):
+        return 60 // step
+    else:
+        return 3600 // step.seconds
 
+
+def minutes_data_count(minutes, step):
+    if isinstance(step, int):
+        return minutes // step
+    else:
+        return minutes * 60 // step.seconds
+
+
+def neighbors_interpolate(data, miss_start, miss_end):
     miss_count = miss_end - miss_start
     start_value = data.iloc[miss_start - 1]['value']
     end_value = data.iloc[miss_end]['value']
@@ -41,14 +54,14 @@ def neighbors_interpolate(data, miss_start, miss_end):
 
 
 def daily_average(data):
-    return data.groupby([data.index.hour, data.index.minute]).mean()
+    return data.groupby([data.index.hour, data.index.minute]).mean().reset_index(drop=True).to_numpy()
 
 
-def daily_average_interpolate(data, miss_start, miss_end):
-    daily_vag = daily_average(data)
+def daily_average_interpolate(data, daily_vag, miss_start, miss_end, step):
     for i in range(miss_start, miss_end):
         missed_time = data.index[i]
-        data.loc[missed_time] = daily_vag.loc[missed_time.hour, missed_time.minute]
+        idx = missed_time.hour * data_point_per_hour(step) + minutes_data_count(missed_time.minute, step)
+        data.loc[missed_time] = daily_vag[idx]
 
     return data
 
@@ -56,10 +69,10 @@ def daily_average_interpolate(data, miss_start, miss_end):
 def interpolate_missing(data, step, misses):
     for miss_start, miss_end in misses:
         miss_count = miss_end - miss_start
-        if miss_count < 2 or step*miss_count <= dt.timedelta(hours=1):
+        if miss_count < 2 or step * miss_count <= dt.timedelta(hours=1):
             neighbors_interpolate(data, miss_start, miss_end)
         else:
-            daily_average_interpolate(data, miss_start, miss_end)
+            daily_average_interpolate(data, daily_average(data), miss_start, miss_end, step)
 
 
 def add_slots_for_missing(data, step):
