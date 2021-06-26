@@ -9,11 +9,11 @@ def seconds(delta: dt.timedelta):
     return 24 * 60 * 60 * delta.days + delta.seconds
 
 
-def unit_function_pattern(step: Union[int, dt.timedelta]) -> pd.DataFrame:
+def unit_function_pattern(step: Union[int, dt.timedelta], days=31) -> pd.DataFrame:
     """Creates one month of data with unit function pattern, like: ____----___"""
 
     step = dt.timedelta(minutes=step) if type(step) == int else step
-    times = pd.date_range(dt.date(2021, 1, 1), dt.date(2021, 2, 1), freq=step)
+    times = pd.date_range(dt.date(2021, 1, 1), dt.date(2021, 1, 1) + dt.timedelta(days=days), freq=step)
 
     data_point_in_day = seconds(dt.timedelta(days=1)) // seconds(step)
     usage_start = seconds(dt.timedelta(hours=12)) // seconds(step)
