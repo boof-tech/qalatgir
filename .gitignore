@@ -130,4 +130,4 @@ dmypy.json
 
 # pycharm
 .idea/
-cy_qalatgir/qalatgir.c
+qalatgir/cy_qalatgir/qalatgir.c

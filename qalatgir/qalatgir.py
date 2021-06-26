@@ -3,11 +3,13 @@ import datetime as dt
 
 import numpy as np
 import pandas as pd
+from .cy_qalatgir.qalatgir import get_consecutive_missing
+
 import numba
 
 
 @numba.jit(cache=True, nopython=True)
-def get_consecutive_missing(values):
+def get_consecutive_missing_numba(values):
     start = 0
     null_found = False
     misses = []
@@ -103,11 +105,14 @@ def add_slots_for_missing(data, step):
     return data.reindex(times)
 
 
-def fill_missing(data, step):
+def fill_missing(data, step, use_numba=True):
     step = dt.timedelta(minutes=step) if type(step) == int else step
     if not len(data):
         return data
     data = add_slots_for_missing(data, step)
-    misses = get_consecutive_missing(data['value'].to_numpy())
+    if use_numba:
+        misses = get_consecutive_missing_numba(data['value'].astype(np.float64).to_numpy())
+    else:
+        misses = get_consecutive_missing(data['value'].astype(np.float64).to_numpy(), len(data))
     interpolate_missing(data, step, misses)
     return data

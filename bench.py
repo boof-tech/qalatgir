@@ -6,12 +6,26 @@ from qalatgir import fill_missing
 from tests.datasynthesis import unit_function_pattern
 
 
-def setup():
+def get_data():
     original_data = unit_function_pattern(dt.timedelta(minutes=5), days=365).iloc[15:].reset_index(drop=True)
-    missed_period = slice((10 + np.random.randint(30)) * 12, (48 + np.random.randint(30)) * 12)
-    original_data.loc[missed_period, 'value'] = np.nan
-    return (original_data, 5), {}
+    for i in np.random.randint(0, 300, 5):
+        missed_period = slice(i * 24 * 12 + (10 + np.random.randint(30)) * 12,
+                              i * 24 * 12 + (48 + np.random.randint(30)) * 12)
+        original_data.loc[missed_period, 'value'] = np.nan
+    return original_data
 
 
-def test_pure_python(benchmark):
-    benchmark.pedantic(fill_missing, setup=setup, rounds=300)
+def setup_cython():
+    return (get_data(), 5, False), {}
+
+
+def setup_numba():
+    return (get_data(), 5, True), {}
+
+
+def test_benchmark_on_numba(benchmark):
+    benchmark.pedantic(fill_missing, setup=setup_numba, rounds=30)
+
+
+def test_benchmark_on_cython(benchmark):
+    benchmark.pedantic(fill_missing, setup=setup_cython, rounds=30)
