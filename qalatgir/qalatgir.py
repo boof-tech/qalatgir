@@ -59,7 +59,7 @@ def seconds(delta):
 
 def daily_average(arr, step_seconds, days, start_hour, start_minute):
     points_per_day = (24 * 3600) // step_seconds
-    data_place = np.empty(points_per_day * (days + 1))
+    data_place = np.empty(points_per_day * (days + 2))
     data_place.fill(np.nan)
     offset = (start_hour * 3600) // step_seconds + (start_minute * 60) // step_seconds
     data_place[offset:offset + len(arr)] = arr
@@ -70,11 +70,12 @@ def daily_average(arr, step_seconds, days, start_hour, start_minute):
     return np.nanmean(daily_table, axis=0)
 
 
-def daily_average_interpolate(arr, daily_vag, miss_start, miss_end, step):
+def daily_average_interpolate(arr, daily_vag, miss_start, miss_end, step, step_seconds, start_hour, start_minute):
+    offset = (start_hour * 3600) // step_seconds + (start_minute * 60) // step_seconds
     data_point_per_day = ((24 * 3600) // step.seconds)
     days = len(arr) // data_point_per_day + 1
     repeated_daily = np.tile(daily_vag, days)
-    arr[miss_start:miss_end] = repeated_daily[miss_start:miss_end]
+    arr[miss_start:miss_end] = repeated_daily[offset + miss_start:offset + miss_end]
     return arr
 
 
@@ -88,7 +89,9 @@ def interpolate_missing(data, step, misses):
                                       step_seconds=step.seconds, days=(data.index[-1] - data.index[0]).days,
                                       start_hour=data.index[0].hour, start_minute=data.index[0].minute)
 
-            data['value'] = daily_average_interpolate(data['value'].to_numpy(), daily_avg, miss_start, miss_end, step)
+            data['value'] = daily_average_interpolate(data['value'].to_numpy(),
+                                                      daily_avg, miss_start, miss_end, step, step_seconds=step.seconds,
+                                                      start_hour=data.index[0].hour, start_minute=data.index[0].minute)
 
 
 def add_slots_for_missing(data, step):
