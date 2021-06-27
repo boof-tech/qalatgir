@@ -2,7 +2,9 @@ import datetime as dt
 
 import numpy as np
 
-from qalatgir import fill_missing
+from qalatgir import fill_missing, get_consecutive_missing_numba
+from qalatgir.cy_qalatgir.qalatgir import get_consecutive_missing as get_consecutive_missing_cython
+from rust_qalatgir import get_consecutive_missing as get_consecutive_missing_rust
 from tests.datasynthesis import unit_function_pattern
 
 
@@ -27,13 +29,37 @@ def setup_rust():
     return (get_data(), 5, 'rust'), {}
 
 
-def test_benchmark_on_numba(benchmark):
-    benchmark.pedantic(fill_missing, setup=setup_numba, rounds=30)
+# def test_benchmark_on_numba(benchmark):
+#     benchmark.pedantic(fill_missing, setup=setup_numba, rounds=30)
+#
+#
+# def test_benchmark_on_rust(benchmark):
+#     benchmark.pedantic(fill_missing, setup=setup_cython, rounds=30)
+#
+#
+# def test_benchmark_on_cython(benchmark):
+#     benchmark.pedantic(fill_missing, setup=setup_rust, rounds=30)
 
 
-def test_benchmark_on_rust(benchmark):
-    benchmark.pedantic(fill_missing, setup=setup_cython, rounds=30)
+def setup_get_consecutive_missing_cython():
+    arr = np.arange(1_000_000, dtype=float)
+    arr[np.random.randint(0, 1_000_000, 10_000)] = np.nan
+    return (arr, len(arr)), {}
 
 
-def test_benchmark_on_cython(benchmark):
-    benchmark.pedantic(fill_missing, setup=setup_rust, rounds=30)
+def setup_get_consecutive_missing():
+    arr = np.arange(1_000_000, dtype=float)
+    arr[np.random.randint(0, 1_000_000, 10_000)] = np.nan
+    return (arr, ), {}
+
+
+def test_get_consecutive_missing_cython(benchmark):
+    benchmark.pedantic(get_consecutive_missing_cython, setup=setup_get_consecutive_missing_cython, rounds=30)
+
+
+def test_get_consecutive_missing_rust(benchmark):
+    benchmark.pedantic(get_consecutive_missing_rust, setup=setup_get_consecutive_missing, rounds=30)
+
+
+def test_get_consecutive_missing_numba(benchmark):
+    benchmark.pedantic(get_consecutive_missing_numba, setup=setup_get_consecutive_missing, rounds=30)
