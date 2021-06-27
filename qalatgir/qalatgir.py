@@ -4,6 +4,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from .cy_qalatgir.qalatgir import get_consecutive_missing
+import rust_qalatgir
 
 import numba
 
@@ -105,14 +106,16 @@ def add_slots_for_missing(data, step):
     return data.reindex(times)
 
 
-def fill_missing(data, step, use_numba=True):
+def fill_missing(data, step, impl='numba'):
     step = dt.timedelta(minutes=step) if type(step) == int else step
     if not len(data):
         return data
     data = add_slots_for_missing(data, step)
-    if use_numba:
+    if impl == 'numba':
         misses = get_consecutive_missing_numba(data['value'].astype(np.float64).to_numpy())
-    else:
+    elif impl == 'cython':
         misses = get_consecutive_missing(data['value'].astype(np.float64).to_numpy(), len(data))
+    else:
+        misses = rust_qalatgir.get_consecutive_missing(data['value'].astype(np.float64).to_numpy())
     interpolate_missing(data, step, misses)
     return data

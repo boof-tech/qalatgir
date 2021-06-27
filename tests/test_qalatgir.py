@@ -6,7 +6,6 @@ import pandas as pd
 from qalatgir import fill_missing
 from datasynthesis import unit_function_pattern
 
-
 data = [
     {
         'time': dt.datetime(2021, 1, 1),
@@ -24,7 +23,7 @@ data = [
 
 
 def mae(ar1, ar2):
-    return np.mean(np.abs(ar1-ar2))
+    return np.mean(np.abs(ar1 - ar2))
 
 
 def test_one_missing_value_should_replace_with_average():

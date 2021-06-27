@@ -131,3 +131,4 @@ dmypy.json
 # pycharm
 .idea/
 qalatgir/cy_qalatgir/qalatgir.c
+Cargo.lock

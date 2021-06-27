@@ -1,0 +1,16 @@
+
+[package]
+authors = ["Aliakbar Saleh <al.ak.saleh@gmail.com>"]
+name = "rust-qalatgir"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+pyo3 = { version = "0.13" , features = ["extension-module"] }
+numpy = "0.13"
+ndarray = "0.15.2"
+num-complex = "0.4.0"
+
+[lib]
+name = "rust_qalatgir"
+crate-type = ["cdylib"]
